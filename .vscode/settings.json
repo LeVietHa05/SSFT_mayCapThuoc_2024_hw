@@ -1,0 +1,18 @@
+{
+    "files.associations": {
+        "*.ejs": "html",
+        "array": "cpp",
+        "string_view": "cpp",
+        "functional": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "utility": "cpp",
+        "deque": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "vector": "cpp",
+        "initializer_list": "cpp",
+        "*.tcc": "cpp"
+    }
+}

@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "author": "Hà Lê",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": -86.4,
+      "left": 177.64,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo1",
+      "top": -127.6,
+      "left": -179.6,
+      "rotate": 180,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo2",
+      "top": -31.6,
+      "left": -179.6,
+      "rotate": 180,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo3",
+      "top": 64.4,
+      "left": -179.6,
+      "rotate": 180,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo4",
+      "top": -415.6,
+      "left": -179.6,
+      "rotate": 180,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo5",
+      "top": -319.6,
+      "left": -179.6,
+      "rotate": 180,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo6",
+      "top": -223.6,
+      "left": -179.6,
+      "rotate": 180,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-pushbutton-6mm",
+      "id": "btn1",
+      "top": -309.4,
+      "left": 163.2,
+      "attrs": { "color": "green" }
+    },
+    {
+      "type": "wokwi-pushbutton-6mm",
+      "id": "btn2",
+      "top": -280.6,
+      "left": 163.2,
+      "attrs": { "color": "green" }
+    },
+    {
+      "type": "wokwi-pushbutton-6mm",
+      "id": "btn3",
+      "top": -251.8,
+      "left": 163.2,
+      "attrs": { "color": "green" }
+    },
+    {
+      "type": "wokwi-pushbutton-6mm",
+      "id": "btn4",
+      "top": -223,
+      "left": 163.2,
+      "attrs": { "color": "green" }
+    },
+    {
+      "type": "wokwi-pushbutton-6mm",
+      "id": "btn5",
+      "top": -194.2,
+      "left": 163.2,
+      "attrs": { "color": "green" }
+    },
+    {
+      "type": "wokwi-pushbutton-6mm",
+      "id": "btn6",
+      "top": -165.4,
+      "left": 163.2,
+      "attrs": { "color": "green" }
+    }
+  ],
+  "connections": [
+    ["esp:TX", "$serialMonitor:RX", "", []],
+    ["esp:RX", "$serialMonitor:TX", "", []],
+    ["servo1:V+", "servo2:V+", "green", ["h28.8", "v95.9"]],
+    ["servo2:V+", "servo3:V+", "green", ["h28.8", "v86.3"]],
+    ["esp:5V", "servo3:V+", "red", ["h-163.05", "v9.6"]],
+    ["servo1:GND", "servo2:GND", "black", ["h19.2", "v76.8"]],
+    ["servo2:GND", "servo3:GND", "black", ["h19.2", "v96"]],
+    ["servo3:GND", "esp:GND.1", "black", ["h38.4", "v-57.6"]],
+    ["servo4:V+", "servo5:V+", "green", ["h28.8", "v95.9"]],
+    ["servo5:V+", "servo6:V+", "green", ["h28.8", "v86.3"]],
+    ["servo4:GND", "servo5:GND", "black", ["h19.2", "v76.8"]],
+    ["servo5:GND", "servo6:GND", "black", ["h19.2", "v96"]],
+    ["servo6:V+", "servo1:V+", "green", ["h28.8", "v95.9"]],
+    ["servo6:GND", "servo1:GND", "black", ["h19.2", "v96"]],
+    ["servo3:PWM", "esp:13", "green", ["h9.6", "v-29"]],
+    ["servo2:PWM", "esp:12", "green", ["h9.6", "v38.2", "h96", "v-57.6"]],
+    ["servo1:PWM", "esp:14", "green", ["h9.6", "v86.2", "h28.8", "v38.4"]],
+    ["servo6:PWM", "esp:27", "green", ["h38.4", "v172.6", "h9.6", "v28.8"]],
+    ["servo5:PWM", "esp:26", "green", ["h48", "v259", "h9.6", "v38.4"]],
+    ["servo4:PWM", "esp:25", "green", ["h57.6", "v345.4", "h9.6", "v38.4"]],
+    ["btn6:1.l", "btn5:1.l", "green", ["h-28.8", "v-28.8"]],
+    ["btn1:2.l", "esp:VP", "green", ["h-86.4", "v250"]],
+    ["btn1:1.l", "btn2:1.l", "green", ["h-28.8", "v28.8"]],
+    ["btn2:1.l", "btn3:1.l", "green", ["h-28.8", "v28.8"]],
+    ["btn3:1.l", "btn4:1.l", "green", ["h-28.8", "v28.8"]],
+    ["btn4:1.l", "btn5:1.l", "green", ["h-28.8", "v28.8"]],
+    ["btn2:2.l", "esp:VN", "green", ["h-76.8", "v230.8"]],
+    ["btn3:2.l", "esp:34", "green", ["h-67.2", "v211.6"]],
+    ["btn4:2.l", "esp:35", "green", ["h-57.6", "v192.4"]],
+    ["btn5:2.l", "esp:32", "green", ["h-48", "v173.2"]],
+    ["btn6:2.l", "esp:33", "green", ["h-38.4", "v154", "h28.8", "v-86.4"]],
+    ["btn6:1.l", "esp:GND.2", "green", ["h-28.8", "v67.2", "h153.6"]]
+  ],
+  "dependencies": {}
+}
