@@ -7,17 +7,18 @@
 #include <Wire.h>
 #include <HardwareSerial.h>
 #include <ESP32Servo.h>
+#include <DFRobotDFPlayerMini.h>
 //--------------------------------------------
-// #define TEST 1
 #define dw digitalWrite
 #define dr digitalRead
 
 #define USE_SERIAL Serial
-#define SERVER "pillport.vn "
+#define SERVER "pillport.vn"
 #define PORT 80
 
 #define TOPIC1 "phoneNumber"
 #define TOPIC2 "message"
+#define TOPIC3 "pills"
 
 #define CTHT1 33
 #define CTHT2 32
@@ -36,16 +37,14 @@
 #define RUNG 4
 #define COI 2
 #define LED 15
-#define 
+// #define
 
 #define RX2 16
 #define TX2 17
 
 //--------------------------------------------
 SocketIOclient socketIO;
-// HardwareSerial QR_Sensor(1);
-HardwareSerial DFPLAYER(2);
-DFRobotDFPlayerMini myDFPlayer;
+// DFRobotDFPlayerMini myDFPlayer;
 Servo servo[6];
 int ctht[6] = {CTHT1, CTHT2, CTHT3, CTHT4, CTHT5, CTHT6};
 int ser[6] = {SER1, SER2, SER3, SER4, SER5, SER6};
@@ -135,89 +134,67 @@ void runServo(int id, int time)
 //--------------------------------------------
 void setup()
 {
-  Serial.begin(9600); // UART for QR sensor
+  Serial.begin(115200); // UART for DFmini player
+  Serial.print("runnign");
 
   // reposition the servo and init the pin
-  for (int i = 0; i < 6; i++)
-  {
-    pinMode(ctht[i], INPUT_PULLUP);
-    servo[i].attach(ser[i]);
-    servo[i].write(70);
-  }
+  // for (int i = 0; i < 6; i++)
+  // {
+  //   pinMode(ctht[i], INPUT_PULLUP);
+  //   servo[i].attach(ser[i]);
+  //   servo[i].write(70);
+  // }
 
-  returnServoToOrigin();
+  // returnServoToOrigin();
 
-  pinMode(RUNG, INPUT);
-  pinMode(COI, OUTPUT);
+  // pinMode(RUNG, INPUT);
+  // pinMode(COI, OUTPUT);
   pinMode(LED, OUTPUT);
-#ifndef TEST
-  DFPLAYER.begin(9600, SERIAL_8O1, RX2, TX2); // UART for DF mini player
-  if (!myDFPlayer.begin(DFPLAYER, /*isAck*/ true, /*doReset*/ true))
-  { // Use softwareSerial to communicate with mp3.
-    Serial.println(F("Unable to begin:"));
-    Serial.println(F("1.Please recheck the connection!"));
-    Serial.println(F("2.Please insert the SD card!"));
-    for (int i = 0; i < 3; i++)
-    {
-      dw(LED, !dr(LED));
-      delay(1000);
-    }
-  }
-  myDFPlayer.volume(10); // Set volume value. From 0 to 30
-#endif
 
-#ifdef TEST
-  for (int i = 0; i < 3; i++)
-  {
-    servo[i].write(180);
-  }
-  delay(600);
-  for (int i = 0; i < 3; i++)
-  {
-    servo[i].write(90);
-  }
-  delay(500);
-  for (int i = 0; i < 3; i++)
-  {
-    servo[i].write(70);
-  }
-
-  returnServoToOrigin();
-#endif
-
-#ifndef TEST
-  WiFiManager wifiManager;
-  wifiManager.autoConnect("PillPort");
-  // WiFi.begin(ssid, pass);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("WiFi connected");
-  // server address, port and URL
-  socketIO.begin(SERVER, PORT, "/socket.io/?EIO=4");
-
-  // event handler
-  socketIO.onEvent(socketIOEvent);
-#endif
+  Serial2.begin(115200, SERIAL_8N1, RX2, TX2);
+  Serial.println("initialize the scanner");
+  // if (!myDFPlayer.begin(Serial, /*isAck*/ true, /*doReset*/ true))
+  // { // Use softwareSerial to communicate with mp3.
+  //   Serial.println(F("Unable to begin:"));
+  //   Serial.println(F("1.Please recheck the connection!"));
+  //   Serial.println(F("2.Please insert the SD card!"));
+  //   for (int i = 0; i < 3; i++)
+  //   {
+  //     dw(LED, !dr(LED));
+  //     delay(1000);
+  //   }
+  // }
+  // myDFPlayer.volume(10); // Set volume value. From 0 to 30
+  //   WiFiManager wifiManager;
+  //   wifiManager.autoConnect("PillPort");
+  //   // WiFi.begin(ssid, pass);
+  //   while (WiFi.status() != WL_CONNECTED)
+  //   {
+  //     delay(500);
+  //     Serial.print(".");
+  //   }
+  //   Serial.println("WiFi connected");
+  //   // server address, port and URL
+  //   socketIO.begin(SERVER, PORT, "/socket.io/?EIO=4");
+  //
+  //   // event handler
+  //   socketIO.onEvent(socketIOEvent);
 }
 //--------------------------------------------
 void loop()
 {
   delay(10);
-  if (Serial.available()) // QR sensor
+  while (Serial2.available()) // QR sensor
   {
-    String data = Serial.readString();
+    Serial.print("abc");
+    String data = Serial2.readString();
     Serial.println(data);
-#ifdef TEST
-    // if test then run servo and return to main loop
-    runTest();
-    return;
-#endif
+    dw(LED, !dr(LED));
+
     // check if data is valid
     if (data.length() != 34)
     {
+      Serial.println("Invalid data. Length Check fail");
       return;
     }
     // String data : "0987654321,1:1,2:1,3:1,4:0,5:0,6:0"
@@ -228,16 +205,15 @@ void loop()
     // write code take phone number and pill id and number of pill
     // then run the servo
     String phone = data.substring(0, 10);
-    //send phone number to server for the record
-    sendDataToServer(TOPIC1, phone);
-    myDFPlayer.play(1); // play the sound
-    String pills = [];
+    // send phone number to server for the record
+    sendDataToServer(TOPIC3, data);
+    // myDFPlayer.play(1); // play the sound
     for (int i = 0; i < 6; i++)
     {
-      pills[i] = data.substring(11 + i * 4, 11 + i * 4 + 3);
+      String temp = data.substring(11 + i * 4, 11 + i * 4 + 3);
       // pills[1] = "1:1";
       // run servo i
-      runServo(i, pills[i].substring(2, 3).toInt());
+      runServo(i, temp.substring(2, 3).toInt());
     }
   }
 }
