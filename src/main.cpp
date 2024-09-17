@@ -39,15 +39,30 @@
 #define LED 15
 // #define
 
+#define RX1 22
+#define TX1 23
 #define RX2 16
 #define TX2 17
 
 //--------------------------------------------
 SocketIOclient socketIO;
-// DFRobotDFPlayerMini myDFPlayer;
+DFRobotDFPlayerMini myDFPlayer;
 Servo servo[6];
 int ctht[6] = {CTHT1, CTHT2, CTHT3, CTHT4, CTHT5, CTHT6};
 int ser[6] = {SER1, SER2, SER3, SER4, SER5, SER6};
+int rungIndex = 0;
+unsigned long lastRung = 0;
+//--------------------------------------------
+void ledTrigger(int time, int length)
+{
+  for (int i = 0; i < time; i++)
+  {
+    dw(LED, HIGH);
+    delay(length);
+    dw(LED, LOW);
+    delay(length);
+  }
+}
 //--------------------------------------------
 void socketIOEvent(socketIOmessageType_t type, uint8_t *payload, size_t length)
 {
@@ -125,7 +140,8 @@ void runServo(int id, int time)
     delay(600);
     servo[id].write(90);
     delay(100);
-    servo[id].write(70);
+    servo[id].write(0);
+    delay(500);
     while (dr(ctht[id]) == HIGH) // wait for the pill to be taken
       ;
     servo[id].write(90);
@@ -138,61 +154,81 @@ void setup()
   Serial.print("runnign");
 
   // reposition the servo and init the pin
-  // for (int i = 0; i < 6; i++)
-  // {
-  //   pinMode(ctht[i], INPUT_PULLUP);
-  //   servo[i].attach(ser[i]);
-  //   servo[i].write(70);
-  // }
-
-  // returnServoToOrigin();
-
-  // pinMode(RUNG, INPUT);
-  // pinMode(COI, OUTPUT);
+  for (int i = 0; i < 6; i++)
+  {
+    pinMode(ctht[i], INPUT_PULLUP);
+    servo[i].attach(ser[i]);
+    servo[i].write(30);
+  }
+  pinMode(RUNG, INPUT);
+  pinMode(COI, OUTPUT);
   pinMode(LED, OUTPUT);
 
+  returnServoToOrigin();
+
+  dw(COI, HIGH);
+  delay(100);
+  dw(COI, LOW);
   Serial2.begin(115200, SERIAL_8N1, RX2, TX2);
+  Serial1.begin(9600, SERIAL_8N1, RX1, TX1);
   Serial.println("initialize the scanner");
-  // if (!myDFPlayer.begin(Serial, /*isAck*/ true, /*doReset*/ true))
-  // { // Use softwareSerial to communicate with mp3.
-  //   Serial.println(F("Unable to begin:"));
-  //   Serial.println(F("1.Please recheck the connection!"));
-  //   Serial.println(F("2.Please insert the SD card!"));
-  //   for (int i = 0; i < 3; i++)
-  //   {
-  //     dw(LED, !dr(LED));
-  //     delay(1000);
-  //   }
-  // }
-  // myDFPlayer.volume(10); // Set volume value. From 0 to 30
-  //   WiFiManager wifiManager;
-  //   wifiManager.autoConnect("PillPort");
-  //   // WiFi.begin(ssid, pass);
-  //   while (WiFi.status() != WL_CONNECTED)
-  //   {
-  //     delay(500);
-  //     Serial.print(".");
-  //   }
-  //   Serial.println("WiFi connected");
-  //   // server address, port and URL
-  //   socketIO.begin(SERVER, PORT, "/socket.io/?EIO=4");
-  //
-  //   // event handler
-  //   socketIO.onEvent(socketIOEvent);
+  if (!myDFPlayer.begin(Serial1, /*isAck*/ true, /*doReset*/ true))
+  { // Use softwareSerial to communicate with mp3.
+    Serial.println(F("Unable to begin:"));
+    Serial.println(F("1.Please recheck the connection!"));
+    Serial.println(F("2.Please insert the SD card!"));
+    ledTrigger(3, 1000);
+  }
+
+  myDFPlayer.volume(10); // Set volume value. From 0 to 30
+  WiFiManager wifiManager;
+  wifiManager.autoConnect("PillPort");
+  // WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
+    ledTrigger(1, 100);
+  }
+  dw(COI, HIGH);
+  delay(100);
+  dw(COI, LOW);
+  Serial.println("WiFi connected");
+  // server address, port and URL
+  socketIO.begin(SERVER, PORT, "/socket.io/?EIO=4");
+
+  // event handler
+  socketIO.onEvent(socketIOEvent);
 }
 //--------------------------------------------
 void loop()
 {
   delay(10);
+  while (Serial.available())
+  {
+    String temp = Serial.readStringUntil('\n');
+    if (temp == "COI")
+    {
+      dw(COI, HIGH);
+      delay(1000);
+      dw(COI, LOW);
+    }
+    if (temp == "LED")
+    {
+      dw(LED, HIGH);
+      delay(1000);
+      dw(LED, LOW);
+    }
+  }
   while (Serial2.available()) // QR sensor
   {
     Serial.print("abc");
     String data = Serial2.readString();
     Serial.println(data);
-    dw(LED, !dr(LED));
+    Serial.println(data.length());
 
     // check if data is valid
-    if (data.length() != 34)
+    if (data.length() != 35)
     {
       Serial.println("Invalid data. Length Check fail");
       return;
@@ -215,5 +251,21 @@ void loop()
       // run servo i
       runServo(i, temp.substring(2, 3).toInt());
     }
+  }
+
+  // check if the rung button is trigger 10 times in 10 seconds
+  if (dr(RUNG) == HIGH)
+  {
+    rungIndex++;
+    if (rungIndex > 10)
+    {
+      dw(COI, HIGH);
+    }
+  }
+  // if not reset the rungIndex
+  if (millis() - lastRung > 10000)
+  {
+    rungIndex = 0;
+    lastRung = millis();
   }
 }
