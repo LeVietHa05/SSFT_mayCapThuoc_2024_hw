@@ -19,6 +19,7 @@
 #define TOPIC1 "phoneNumber"
 #define TOPIC2 "message"
 #define TOPIC3 "pills"
+#define TOPIC4 "/esp/pills"
 
 #define CTHT1 33
 #define CTHT2 32
@@ -53,13 +54,13 @@ int ser[6] = {SER1, SER2, SER3, SER4, SER5, SER6};
 int rungIndex = 0;
 unsigned long lastRung = 0;
 //--------------------------------------------
-void ledTrigger(int time, int length)
+void trigger(int time, int length, int pin)
 {
   for (int i = 0; i < time; i++)
   {
-    dw(LED, HIGH);
+    dw(pin, HIGH);
     delay(length);
-    dw(LED, LOW);
+    dw(pin, LOW);
     delay(length);
   }
 }
@@ -81,6 +82,20 @@ void socketIOEvent(socketIOmessageType_t type, uint8_t *payload, size_t length)
   case sIOtype_EVENT:
   {
     Serial.println("get event");
+    String temp = String((char *)payload);
+    Serial.println(temp);
+    // temp : "0987654321,1:1,2:1,3:1,4:0,5:0,6:0"
+    if (temp.indexOf("/esp/pills") != -1)
+    {
+      trigger(3, 100, LED);
+      trigger(3, 100, COI);
+      Serial.println("run the servo");
+      for (int i = 0; i < 6; i++)
+      {
+        String temp = temp.substring(11 + i * 4, 11 + i * 4 + 3);
+        runServo(i, temp.substring(2, 3).toInt());
+      }
+    }
   }
   break;
   case sIOtype_ACK:
@@ -166,9 +181,8 @@ void setup()
 
   returnServoToOrigin();
 
-  dw(COI, HIGH);
-  delay(100);
-  dw(COI, LOW);
+  trigger(1, 100, COI);
+
   Serial2.begin(115200, SERIAL_8N1, RX2, TX2);
   Serial1.begin(9600, SERIAL_8N1, RX1, TX1);
   Serial.println("initialize the scanner");
@@ -177,7 +191,7 @@ void setup()
     Serial.println(F("Unable to begin:"));
     Serial.println(F("1.Please recheck the connection!"));
     Serial.println(F("2.Please insert the SD card!"));
-    ledTrigger(3, 1000);
+    trigger(3, 1000, LED);
   }
 
   myDFPlayer.volume(10); // Set volume value. From 0 to 30
@@ -188,17 +202,16 @@ void setup()
   {
     delay(500);
     Serial.print(".");
-    ledTrigger(1, 100);
+    trigger(1, 100, LED);
   }
-  dw(COI, HIGH);
-  delay(100);
-  dw(COI, LOW);
+
   Serial.println("WiFi connected");
   // server address, port and URL
   socketIO.begin(SERVER, PORT, "/socket.io/?EIO=4");
 
   // event handler
   socketIO.onEvent(socketIOEvent);
+  trigger(3, 100, COI);
 }
 //--------------------------------------------
 void loop()
