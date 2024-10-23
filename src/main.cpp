@@ -13,7 +13,7 @@
 #define dr digitalRead
 
 #define USE_SERIAL Serial
-#define SERVER "pillport.vn"
+#define SERVER "pillport.net"
 #define PORT 80
 
 #define TOPIC1 "phoneNumber"
@@ -54,6 +54,8 @@ int ser[6] = {SER1, SER2, SER3, SER4, SER5, SER6};
 int rungIndex = 0;
 unsigned long lastRung = 0;
 //--------------------------------------------
+void runServo(int id, int time);
+//--------------------------------------------
 void trigger(int time, int length, int pin)
 {
   for (int i = 0; i < time; i++)
@@ -84,16 +86,19 @@ void socketIOEvent(socketIOmessageType_t type, uint8_t *payload, size_t length)
     Serial.println("get event");
     String temp = String((char *)payload);
     Serial.println(temp);
+    Serial.println(temp.length());
+
     // temp : "0987654321,1:1,2:1,3:1,4:0,5:0,6:0"
     if (temp.indexOf("/esp/pills") != -1)
     {
       trigger(3, 100, LED);
       trigger(3, 100, COI);
+      temp = temp.substring(15);
       Serial.println("run the servo");
       for (int i = 0; i < 6; i++)
       {
-        String temp = temp.substring(11 + i * 4, 11 + i * 4 + 3);
-        runServo(i, temp.substring(2, 3).toInt());
+        String temp1 = temp.substring(11 + i * 4, 11 + i * 4 + 3);
+        runServo(i, temp1.substring(2, 3).toInt());
       }
     }
   }
@@ -216,6 +221,7 @@ void setup()
 //--------------------------------------------
 void loop()
 {
+  socketIO.loop();
   delay(10);
   while (Serial.available())
   {
@@ -244,6 +250,7 @@ void loop()
     if (data.length() != 35)
     {
       Serial.println("Invalid data. Length Check fail");
+      trigger(3, 1000, COI);
       return;
     }
     // String data : "0987654321,1:1,2:1,3:1,4:0,5:0,6:0"
@@ -257,6 +264,8 @@ void loop()
     // send phone number to server for the record
     sendDataToServer(TOPIC3, data);
     // myDFPlayer.play(1); // play the sound
+    trigger(3, 100, LED);
+    trigger(3, 1000, COI);
     for (int i = 0; i < 6; i++)
     {
       String temp = data.substring(11 + i * 4, 11 + i * 4 + 3);
@@ -274,6 +283,7 @@ void loop()
     {
       dw(COI, HIGH);
     }
+    delay(100);
   }
   // if not reset the rungIndex
   if (millis() - lastRung > 10000)
